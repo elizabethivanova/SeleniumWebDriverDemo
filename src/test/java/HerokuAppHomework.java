@@ -6,6 +6,10 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.interactions.Action;
 import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.support.ui.ExpectedCondition;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.Wait;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -19,6 +23,7 @@ public class HerokuAppHomework {
     WebDriver driver;
     Actions actions;
     Alert alert;
+    WebDriverWait wait;
 
     @BeforeMethod
     public void setUp(){
@@ -28,6 +33,7 @@ public class HerokuAppHomework {
         driver.manage().window().maximize();
         driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(7));
         driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(7));
+        wait = new WebDriverWait(driver, Duration.ofSeconds(10));
     }
     @AfterMethod
     public void tearDown(){
@@ -130,7 +136,7 @@ public class HerokuAppHomework {
         }
     }
     @Test
-    public void testDragAndDrop() throws InterruptedException {
+    public void testDragAndDrop(){
         driver.get("https://jqueryui.com/droppable/");
         WebElement iframe = driver.findElement(By.xpath("//iframe"));
         driver.switchTo().frame(iframe);
@@ -143,5 +149,102 @@ public class HerokuAppHomework {
         textBox = driver.findElement(By.xpath("//*[@id='droppable']/p"));
         Assert.assertEquals(textBox.getText(), "Dropped!");
 
+    }
+    @Test
+    public void testScroll() throws InterruptedException {
+        driver.get("https://the-internet.herokuapp.com/floating_menu");
+        WebElement menu = driver.findElement(By.xpath("//*[@id='menu']"));
+        Assert.assertTrue(menu.isDisplayed());
+
+        actions.scrollByAmount(0, 3000).perform();
+        Assert.assertTrue(menu.isDisplayed());
+        actions.scrollByAmount(0, -2000).perform();
+        Assert.assertTrue(menu.isDisplayed());
+    }
+    @Test
+    public void testHover(){
+        driver.get("https://the-internet.herokuapp.com/hovers");
+        for (int i = 1; i <= 3; i++) {
+            WebElement user = driver.findElement(By.xpath("//div[@class='figure']" + "[" + i + "]"));
+            actions.moveToElement(user).perform();
+            WebElement userCheck = driver.findElement(By.xpath("//div[@class='figcaption']/h5[contains(text(), 'name: user" + i + "')]"));
+            Assert.assertTrue(userCheck.isDisplayed());
+        }
+    }
+    @Test
+    public void testDropDown(){
+        driver.get("https://the-internet.herokuapp.com/dropdown");
+        WebElement dropDown = driver.findElement(By.xpath("//select[@id='dropdown']"));
+        WebElement startOption = driver.findElement(By.xpath("//select[@id='dropdown']/option[contains(text(), 'Please select an option')]"));
+        Assert.assertEquals(startOption.getText(), "Please select an option");
+        WebElement optionOne = driver.findElement(By.xpath("//select[@id='dropdown']/option[@value=1]"));
+        WebElement optionTwo = driver.findElement(By.xpath("//select[@id='dropdown']/option[@value=2]"));
+        dropDown.click();
+        optionOne.click();
+        Assert.assertEquals(optionOne.getText(), "Option 1");
+        optionTwo.click();
+        Assert.assertEquals(optionTwo.getText(), "Option 2");
+
+    }
+    @Test
+    public void toDoDynamicContent(){
+        driver.get("https://the-internet.herokuapp.com/dynamic_content");
+        WebElement clickHereLink = driver.findElement(By.xpath("//a[contains(text(), 'click')]"));
+        List<WebElement> text = driver.findElements(By.xpath("//*[@class='large-10 columns']"));
+        //WebElement firstText = driver.findElement();
+        WebElement firstAvatar = driver.findElement(By.xpath("//*[@src='/img/avatars/Original-Facebook-Geek-Profile-Avatar-5.jpg']"));
+        WebElement secondAvatar = driver.findElement(By.xpath("//*[@src='/img/avatars/Original-Facebook-Geek-Profile-Avatar-6.jpg']"));
+        //WebElement dynamicAvatar = driver.findElement(By.xpath("//*[@src='/img/avatars/Original-Facebook-Geek-Profile-Avatar-7.jpg']"));
+        String firstText = text.get(0).getText();
+        String secondText = text.get(1).getText();
+        String dynamicText = text.get(2).getText();
+
+        for (int i = 1; i <= 3; i++) {
+            clickHereLink.click();
+            Assert.assertEquals(firstText, "Accusantium eius ut architecto neque vel voluptatem vel nam eos minus ullam dolores voluptates enim sed voluptatem rerum qui sapiente nesciunt aspernatur et accusamus laboriosam culpa tenetur hic aut placeat error autem qui sunt.");
+            Assert.assertEquals(secondText, "Omnis fugiat porro vero quas tempora quis eveniet ab officia cupiditate culpa repellat debitis itaque possimus odit dolorum et iste quibusdam quis dicta autem sint vel quo vel consequuntur dolorem nihil neque sunt aperiam blanditiis.");
+            Assert.assertNotEquals(dynamicText, "Natus error cumque nemo harum ipsa nihil minus temporibus quia autem nisi quidem asperiores amet maxime voluptatibus aut autem est blanditiis voluptas facilis distinctio sit iure et architecto aut ut veritatis.");
+            Assert.assertEquals(firstAvatar.getText(), "/img/avatars/Original-Facebook-Geek-Profile-Avatar-5.jpg");
+            Assert.assertEquals(secondAvatar.getText(), "/img/avatars/Original-Facebook-Geek-Profile-Avatar-6.jpg");
+        }
+    }
+    @Test
+    public void dynamicControls(){
+        driver.get("https://the-internet.herokuapp.com/dynamic_controls");
+        WebElement removeButton = driver.findElement(By.xpath("//button[@autocomplete='off' and contains(text(), 'Remove')]"));
+        WebElement checkbox = driver.findElement(By.xpath("//*[@id='checkbox']"));
+        Assert.assertTrue(checkbox.isDisplayed());
+        By loadingBarBy = By.xpath("//*[@id='loading']");
+        removeButton.click();
+        WebElement loadingBar = driver.findElement(loadingBarBy);
+        wait.until(ExpectedConditions.invisibilityOf(loadingBar));
+        WebElement message = driver.findElement(By.xpath("//*[@id='message']"));
+        Assert.assertTrue(message.isDisplayed());
+    }
+    @Test
+    public void dynamicLoading(){
+        driver.get("https://the-internet.herokuapp.com/dynamic_loading/2");
+        WebElement startBtn = driver.findElement(By.xpath("//div[@id='start']/button"));
+        By loadingBarBy = By.xpath("//*[@id='loading']");
+        startBtn.click();
+        WebElement loadingBar = driver.findElement(loadingBarBy);
+        wait.until(ExpectedConditions.invisibilityOf(loadingBar));
+        WebElement finishTxt = driver.findElement(By.xpath("//*[@id='finish']"));
+        Assert.assertTrue(finishTxt.isDisplayed());
+
+    }
+    @Test
+    public void multipleWindows(){
+        driver.get("https://the-internet.herokuapp.com/windows");
+        String parentWindow = driver.getWindowHandle();
+        String newWindow = "https://the-internet.herokuapp.com/windows/new";
+        WebElement clickHereLink = driver.findElement(By.xpath("//a[@href='/windows/new']"));
+        clickHereLink.click();
+        //driver.switchTo().window(newWindow);
+        By txtNewWindowBy = By.xpath("//div[@class='example']");
+        WebElement txtNewWindow = driver.findElement(txtNewWindowBy);
+        wait.until(ExpectedConditions.visibilityOf(txtNewWindow));
+
+        Assert.assertTrue(txtNewWindow.isDisplayed());
     }
 }
